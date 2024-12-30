@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "snapshotmc",
+  "version": "${version}",
+  "name": "SnapshotMC",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "ARR",
+  "icon": "assets/snapshotmc/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "element4th.snapshotmc.SnapshotMCClient"
+    ],
+    "main": [
+      "element4th.snapshotmc.SnapshotMCMain"
+    ]
+  },
+  "mixins": [
+    "snapshotmc.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
