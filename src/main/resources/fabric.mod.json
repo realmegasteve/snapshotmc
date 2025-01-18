@@ -9,12 +9,25 @@
   "license": "ARR",
   "icon": "assets/snapshotmc/icon.png",
   "environment": "*",
+  "accessWidener": "snapshotmc.accesswidener",
   "entrypoints": {
     "client": [
       "element4th.snapshotmc.SnapshotMCClient"
     ],
     "main": [
       "element4th.snapshotmc.SnapshotMCMain"
+    ],
+    "preLaunch": [
+      "element4th.snapshotmc.SnapshotMCMain"
+    ],
+    "cardinal-components-entity": [
+      "element4th.snapshotmc.cardinal_components.SnapshotCardinalComponents"
+    ],
+    "cardinal-components-world": [
+      "element4th.snapshotmc.cardinal_components.SnapshotCardinalComponents"
+    ],
+    "cardinal-components-block": [
+      "element4th.snapshotmc.cardinal_components.SnapshotCardinalComponents"
     ]
   },
   "mixins": [
