@@ -25,7 +25,7 @@ public class SnapshotEntities {
     );
 
     public static void register() {
-        FabricDefaultAttributeRegistry.register(CAPYBARA_TYPE, CapybaraEntity.createLivingAttributes());
+        FabricDefaultAttributeRegistry.register(CAPYBARA_TYPE, CapybaraEntity.createAttributes());
     }
 
     @Environment(EnvType.CLIENT)
