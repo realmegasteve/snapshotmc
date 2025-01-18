@@ -6,11 +6,12 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
+@SuppressWarnings("all")
 public class CapybaraEntityModel extends GeoModel<CapybaraEntity> {
 
     @Override
     public Identifier getModelResource(CapybaraEntity capybaraEntity, @Nullable GeoRenderer<CapybaraEntity> renderer) {
-        return SnapshotMCMain.id("geo/entity/capybara.geo.json");
+        return this.getModelResource(capybaraEntity);
     }
 
     @Override
@@ -20,16 +21,23 @@ public class CapybaraEntityModel extends GeoModel<CapybaraEntity> {
 
     @Override
     public Identifier getTextureResource(CapybaraEntity capybaraEntity, @Nullable GeoRenderer<CapybaraEntity> renderer) {
-        return capybaraEntity.getVariant().value().getTextureId();
+        return this.getTextureResource(capybaraEntity);
     }
 
     @Override
     public Identifier getTextureResource(CapybaraEntity capybaraEntity) {
-        return capybaraEntity.getVariant().value().getTextureId();
+        String id = "textures/entity/capybara/capybara_normal";
+        if(capybaraEntity.capybaraIsSleeping()) id += "_sleeping";
+        return SnapshotMCMain.id(id + ".png");
     }
 
     @Override
     public Identifier getAnimationResource(CapybaraEntity capybaraEntity) {
-        return SnapshotMCMain.id("animations/entity/capybara.geo.json");
+        return SnapshotMCMain.id("animations/entity/capybara.animation.json");
+    }
+
+    @Override
+    public boolean crashIfBoneMissing() {
+        return false;
     }
 }

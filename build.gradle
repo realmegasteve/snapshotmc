@@ -40,7 +40,6 @@ dependencies {
 
     // Liby
     modImplementation(files("./libs/liby-${project.liby_version}.jar"))
-    include(files("./libs/liby-${project.liby_version}.jar"))
     implementation "org.reflections:reflections:0.10.2"
 
 

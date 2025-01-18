@@ -1,126 +1,126 @@
 package element4th.snapshotmc.common.entity.custom.capybara;
 
-import element4th.snapshotmc.registry.CapybaraVariantRegistry;
+import element4th.snapshotmc.common.entity.SnapshotEntities;
+import element4th.snapshotmc.common.entity.custom.capybara.goals.CapybaraGoingToSleepGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.passive.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Arm;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
+import org.joml.Vector3f;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class CapybaraEntity extends AnimalEntity implements VariantHolder<RegistryEntry<CapybaraVariant>>, GeoEntity {
+import java.util.Collections;
 
-    private static final TrackedData<RegistryEntry<CapybaraVariant>> VARIANT = DataTracker.registerData(CapybaraEntity.class, CapybaraVariantRegistry.CAPYBARA_VARIANT_TRACKED_DATA);
+public class CapybaraEntity extends AnimalEntity implements GeoEntity {
+    // Static animations
+    protected static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("capybara.walk");
+    protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("capybara.idle");
+    protected static final RawAnimation SLEEPING_ANIM = RawAnimation.begin().thenLoop("capybara.sleeping");
+
+    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+
+    public static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    public static final TrackedData<Vector3f> SLEEPING_POSITION = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.VECTOR3F);
 
     public CapybaraEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
     }
 
-    public void setVariant(RegistryEntry<CapybaraVariant> registryEntry) {
-        this.dataTracker.set(VARIANT, registryEntry);
-    }
-
-    @Override
-    public RegistryEntry<CapybaraVariant> getVariant() {
-        return this.dataTracker.get(VARIANT);
+    public static DefaultAttributeContainer.Builder createAttributes() {
+        return createLivingAttributes()
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.15f)
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8)
+                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 6f);
     }
 
     @Override
     protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(3, new WanderAroundFarGoal(this, 1.0));
-        this.goalSelector.add(4, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.add(4, new LookAroundGoal(this));
-    }
-
-    public static DefaultAttributeContainer.Builder createAttributes() {
-        return DefaultAttributeContainer.builder()
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.1F)
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 8f);
+        // Initialize AI goals
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(2, new CapybaraGoingToSleepGoal(this, 1f, 32, 6));
+        this.goalSelector.add(3, new AnimalMateGoal(this, 1.0));
+        this.goalSelector.add(4, new TemptGoal(this, 1.6, stack -> stack.isIn(ItemTags.PIG_FOOD), false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1.1));
+        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1.0));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
     }
 
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
-        Registry<CapybaraVariant> registry = CapybaraVariantRegistry.CAPYBARA_VARIANTS_REGISTRY;
-        builder.add(VARIANT, registry.getEntry(CapybaraVariants.DEFAULT).or(registry::getDefaultEntry).orElseThrow());
+        builder.add(IS_SLEEPING, false);
+        builder.add(SLEEPING_POSITION, new Vector3f(0.0F, 0.0F, 0.0F));
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-//        RegistryEntry<CapybaraVariant> variant = this.getVariant();
-//
-//        System.out.println(variant.getKey());
-//
-//        variant.getKey().ifPresent(registryKey -> nbt.putString("variant", registryKey.getValue().toString()));
+    protected void applyDamage(DamageSource source, float amount) {
+        this.capybaraWakeUp();
 
+        super.applyDamage(source, amount);
+    }
+
+    public boolean capybaraIsSleeping() {
+        return this.getDataTracker().get(IS_SLEEPING);
+    }
+
+    public void capybaraSleep(BlockPos pos) {
+        if (this.hasVehicle()) {
+            this.stopRiding();
+        }
+
+        this.getDataTracker().set(IS_SLEEPING, true);
+        this.getDataTracker().set(SLEEPING_POSITION, new Vector3f(pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F));
+        this.setVelocity(Vec3d.ZERO);
+        this.velocityDirty = true;
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        //Optional.ofNullable(Identifier.tryParse(nbt.getString("variant")))
-        //                .map(variantId -> RegistryKey.of(SnapshotRegistry.CAPYBARA_VARIANT_KEY, variantId))
-        //                .flatMap(SnapshotRegistry.CAPYBARA_VARIANTS_REGISTRY::getEntry)
-        //                .ifPresent(this::setVariant);
-
-        this.setVariant(CapybaraVariantRegistry.NORMAL_VARIANT);
+    public boolean canMoveVoluntarily() {
+        return super.canMoveVoluntarily() && !capybaraIsSleeping();
     }
 
-
+    public void capybaraWakeUp() {
+        this.getDataTracker().set(IS_SLEEPING, false);
+    }
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return false;
-    }
-
-    @Nullable
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-//        RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
-//        RegistryEntry<CapybaraVariant> registryEntry2;
-//        if (entityData instanceof CapybaraEntity.CapybaraData data) {
-//            registryEntry2 = data.variant;
-//        } else {
-//            registryEntry2 = CapybaraVariants.fromBiome(this.getRegistryManager(), registryEntry);
-//            entityData = new CapybaraEntity.CapybaraData(registryEntry2);
-//        }
-        this.setVariant(CapybaraVariantRegistry.NORMAL_VARIANT);
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return stack.isIn(ItemTags.PIG_FOOD);
     }
 
     @Override
     public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return null;
+        return new CapybaraEntity(SnapshotEntities.CAPYBARA_TYPE, world);
     }
 
     @Override
     public Iterable<ItemStack> getArmorItems() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public ItemStack getEquippedStack(EquipmentSlot slot) {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -134,21 +134,63 @@ public class CapybaraEntity extends AnimalEntity implements VariantHolder<Regist
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "controller", 5, this::defaultAnimationPredicate));
+    }
 
+    private PlayState defaultAnimationPredicate(AnimationState<CapybaraEntity> event) {
+        var controller = event.getController();
+
+        if (this.capybaraIsSleeping()) {
+            controller.setAnimation(SLEEPING_ANIM);
+            controller.setAnimationSpeed(0.25f); // Adjust animation speed if needed
+            return PlayState.CONTINUE;
+        }
+
+        // Animation speed when not sleeping
+        controller.setAnimationSpeed(1.0f);
+
+        if (Math.floor(this.getVelocity().lengthSquared()) > 0.0 || event.isMoving()) {
+            controller.setAnimation(WALK_ANIM);
+        } else {
+            controller.setAnimation(IDLE_ANIM);
+        }
+        return PlayState.CONTINUE;
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return null;
+        return this.geoCache;
     }
 
-    public static class CapybaraData extends PassiveEntity.PassiveData {
-        public final RegistryEntry<CapybaraVariant> variant;
+    @Override
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("is_sleeping", this.capybaraIsSleeping());
 
-        public CapybaraData(RegistryEntry<CapybaraVariant> variant) {
-            super(false);
-            this.variant = variant;
+        Vector3f sleepingPos = this.getDataTracker().get(SLEEPING_POSITION);
+        if (sleepingPos != null) {
+            NbtCompound sleepingPosNbt = new NbtCompound();
+            sleepingPosNbt.putFloat("x", sleepingPos.x());
+            sleepingPosNbt.putFloat("y", sleepingPos.y());
+            sleepingPosNbt.putFloat("z", sleepingPos.z());
+            nbt.put("sleeping_pos", sleepingPosNbt);
+        }
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.getDataTracker().set(IS_SLEEPING, nbt.getBoolean("is_sleeping"));
+
+        if (nbt.contains("sleeping_pos")) {
+            NbtCompound sleepingPosNbt = nbt.getCompound("sleeping_pos");
+            this.getDataTracker().set(SLEEPING_POSITION, new Vector3f(
+                    sleepingPosNbt.getFloat("x"),
+                    sleepingPosNbt.getFloat("y"),
+                    sleepingPosNbt.getFloat("z")
+            ));
         }
     }
 }
+
