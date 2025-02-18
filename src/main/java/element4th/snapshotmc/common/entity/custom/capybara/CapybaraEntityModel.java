@@ -16,6 +16,9 @@ public class CapybaraEntityModel extends GeoModel<CapybaraEntity> {
 
     @Override
     public Identifier getModelResource(CapybaraEntity capybaraEntity) {
+        if(capybaraEntity.hasCustomName()) {
+            if(capybaraEntity.getCustomName().getLiteralString().toLowerCase().equals("orange")) return SnapshotMCMain.id("geo/entity/capybara_orange.geo.json");
+        }
         return SnapshotMCMain.id("geo/entity/capybara.geo.json");
     }
 

@@ -4,7 +4,6 @@ import element4th.snapshotmc.common.entity.custom.capybara.CapybaraEntity;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -12,24 +11,52 @@ import net.minecraft.world.WorldView;
 
 import java.util.EnumSet;
 
-public class CapybaraGoingToSleepGoal extends MoveToTargetPosGoal {
+public class CapybaraSleepCycleGoal extends MoveToTargetPosGoal {
     private final CapybaraEntity capybaraEntity;
-
     private final int range;
     private final int maxYDifference;
 
-    public CapybaraGoingToSleepGoal(PathAwareEntity mob, double speed, int range, int maxYDifference) {
-        super(mob, speed, range, maxYDifference);
+    public CapybaraSleepCycleGoal(CapybaraEntity capybaraEntity, double speed, int range, int maxYDifference) {
+        super(capybaraEntity, speed, range, maxYDifference);
         this.range = range;
         this.maxYDifference = maxYDifference;
 
-        this.capybaraEntity = (CapybaraEntity) mob;
+        this.capybaraEntity = capybaraEntity;
         this.setControls(EnumSet.of(Goal.Control.JUMP, Goal.Control.MOVE));
     }
 
     @Override
     public boolean canStart() {
-        return !isDay(this.capybaraEntity.getWorld()) && this.findTargetPos();
+        //System.out.println("TRY START");
+        return (isNight(this.capybaraEntity.getWorld()) && !this.capybaraEntity.capybaraIsSleeping() && this.findTargetPos()) ||
+                (isDay(this.capybaraEntity.getWorld()) && this.capybaraEntity.capybaraIsSleeping());
+    }
+
+    @Override
+    public boolean shouldContinue() {
+        return super.shouldContinue() || (isDay(this.capybaraEntity.getWorld()) && this.capybaraEntity.capybaraIsSleeping());
+    }
+
+    @Override
+    public void tick() {
+        //System.out.println("TICK");
+
+        if (isDay(this.capybaraEntity.getWorld()) && this.capybaraEntity.capybaraIsSleeping()) {
+            this.capybaraEntity.capybaraWakeUp();
+            //System.out.println("WAKE UP");
+            return;
+        }
+
+        if (isNight(this.capybaraEntity.getWorld()) && !this.capybaraEntity.capybaraIsSleeping()) {
+            super.tick();
+
+            if (this.hasReached() && this.capybaraEntity.hurtTime <= 0) {
+                //System.out.println("GO TO SLEEP");
+                this.capybaraEntity.capybaraSleep(this.targetPos);
+            } else {
+                this.findTargetPos(); // Keep searching for a valid target if not reached
+            }
+        }
     }
 
     @Override
@@ -40,25 +67,6 @@ public class CapybaraGoingToSleepGoal extends MoveToTargetPosGoal {
                 this.targetPos.getZ() + 0.5,
                 this.speed
         );
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-
-        if (isDay(this.capybaraEntity.getWorld()) || capybaraEntity.capybaraIsSleeping()) {
-            this.stop(); // Ends the goal if it's daytime
-            return;
-        }
-
-        if (this.hasReached() && !this.capybaraEntity.capybaraIsSleeping()) {
-            if (this.capybaraEntity.hurtTime <= 0) {
-                this.capybaraEntity.capybaraSleep(this.targetPos);
-                stop();
-            }
-        } else {
-            this.findTargetPos(); // Keep searching for a valid target if not reached
-        }
     }
 
     @Override
@@ -92,5 +100,9 @@ public class CapybaraGoingToSleepGoal extends MoveToTargetPosGoal {
     public static boolean isDay(World world) {
         long timeOfDay = world.getTimeOfDay() % 24000; // Time wraps every day
         return timeOfDay > 1000 && timeOfDay < 13000;
+    }
+
+    public static boolean isNight(World world) {
+        return !isDay(world);
     }
 }

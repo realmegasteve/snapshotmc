@@ -4,10 +4,11 @@
   "package": "element4th.snapshotmc.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "EntityMixin",
     "LivingEntityMixin"
   ],
   "client": [
-    "GeoEntityRendererMixin"
+    "client.GeoEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
