@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "###",
+    "# #"
+  ],
+  "key": {
+    "#": {
+      "item": "snapshot_mc:chainmail"
+    }
+  },
+  "result": {
+    "id": "minecraft:chainmail_helmet",
+    "count": 1
+  }
+}

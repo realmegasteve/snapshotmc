@@ -1,0 +1,18 @@
+{
+  "custom_sound": {
+    "sounds": [
+      {
+        "name": "snapshot_mc:boomerang_flying",
+        "stream": false
+      },
+      {
+        "name": "snapshot_mc:boomerang_hit",
+        "stream": false
+      },
+      {
+        "name": "snapshot_mc:hammer_hit",
+        "stream": false
+      }
+    ]
+  }
+}
