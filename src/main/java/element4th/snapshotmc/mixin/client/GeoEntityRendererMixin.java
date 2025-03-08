@@ -1,4 +1,4 @@
-package element4th.snapshotmc.mixin;
+package element4th.snapshotmc.mixin.client;
 
 import element4th.snapshotmc.common.entity.custom.CustomSleepRotationEntity;
 import net.minecraft.client.util.math.MatrixStack;

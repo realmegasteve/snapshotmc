@@ -17,4 +17,9 @@ public class CapybaraEntityRenderer extends GeoEntityRenderer<CapybaraEntity> {
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }
+
+    @Override
+    public float getMotionAnimThreshold(CapybaraEntity animatable) {
+        return 0.010f;
+    }
 }

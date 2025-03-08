@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "snapshot_mc:block/desert_flower"
+  }
+}

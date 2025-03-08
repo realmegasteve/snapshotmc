@@ -2,6 +2,8 @@ package element4th.snapshotmc.common.entity.custom.capybara;
 
 import element4th.snapshotmc.common.entity.SnapshotEntities;
 import element4th.snapshotmc.common.entity.custom.capybara.goals.CapybaraGoingToSleepGoal;
+import element4th.snapshotmc.common.entity.custom.capybara.goals.CapybaraSleepCycleGoal;
+import element4th.snapshotmc.common.entity.custom.capybara.goals.CapybaraWakeUpGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -40,29 +42,40 @@ public class CapybaraEntity extends AnimalEntity implements GeoEntity {
     public static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     public static final TrackedData<Vector3f> SLEEPING_POSITION = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.VECTOR3F);
 
+    private int eatGrassTimer;
+    private EatGrassGoal eatGrassGoal;
+
+    private CapybaraSleepCycleGoal sleepCycleGoal;
+
     public CapybaraEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
+
     }
 
     public static DefaultAttributeContainer.Builder createAttributes() {
         return createLivingAttributes()
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.15f)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.2f)
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 8)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 6f);
     }
 
+
+
     @Override
     protected void initGoals() {
         // Initialize AI goals
+        this.eatGrassGoal = new EatGrassGoal(this);
+        this.sleepCycleGoal = new CapybaraSleepCycleGoal(this, 1f, 32, 6);
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new CapybaraGoingToSleepGoal(this, 1f, 32, 6));
-        this.goalSelector.add(3, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(4, new TemptGoal(this, 1.6, stack -> stack.isIn(ItemTags.PIG_FOOD), false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1.1));
-        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1.0));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+        this.goalSelector.add(3, sleepCycleGoal);
+        this.goalSelector.add(4, new AnimalMateGoal(this, 1.0));
+        this.goalSelector.add(5, new TemptGoal(this, 1.6, stack -> stack.isIn(ItemTags.PIG_FOOD), false));
+        this.goalSelector.add(6, new FollowParentGoal(this, 1.1));
+        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0));
+        this.goalSelector.add(8, eatGrassGoal);
+        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 3.0F));
+        this.goalSelector.add(9, new LookAroundGoal(this));
     }
 
     @Override
@@ -87,11 +100,44 @@ public class CapybaraEntity extends AnimalEntity implements GeoEntity {
         if (this.hasVehicle()) {
             this.stopRiding();
         }
-
         this.getDataTracker().set(IS_SLEEPING, true);
         this.getDataTracker().set(SLEEPING_POSITION, new Vector3f(pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F));
         this.setVelocity(Vec3d.ZERO);
         this.velocityDirty = true;
+    }
+
+
+    @Override
+    protected void mobTick() {
+        this.eatGrassTimer = this.eatGrassGoal.getTimer();
+
+        if(CapybaraSleepCycleGoal.isDay(this.getWorld()) && this.capybaraIsSleeping()) {
+            //if(this.sleepCycleGoal == null) {
+            //    this.sleepCycleGoal = new CapybaraSleepCycleGoal(this, 1f, 32, 6);
+            //}
+
+            this.sleepCycleGoal.start();
+        }
+
+        super.mobTick();
+    }
+
+    @Override
+    public void tickMovement() {
+        if (this.getWorld().isClient) {
+            this.eatGrassTimer = Math.max(0, this.eatGrassTimer - 1);
+        }
+
+        super.tickMovement();
+    }
+
+    @Override
+    public void handleStatus(byte status) {
+        if (status == EntityStatuses.SET_SHEEP_EAT_GRASS_TIMER_OR_PRIME_TNT_MINECART) {
+            this.eatGrassTimer = 40;
+        } else {
+            super.handleStatus(status);
+        }
     }
 
     @Override
@@ -100,6 +146,7 @@ public class CapybaraEntity extends AnimalEntity implements GeoEntity {
     }
 
     public void capybaraWakeUp() {
+        System.out.println("WAKE UP WAKE UP WAKE UP");
         this.getDataTracker().set(IS_SLEEPING, false);
     }
 
@@ -143,12 +190,8 @@ public class CapybaraEntity extends AnimalEntity implements GeoEntity {
 
         if (this.capybaraIsSleeping()) {
             controller.setAnimation(SLEEPING_ANIM);
-            controller.setAnimationSpeed(0.25f); // Adjust animation speed if needed
             return PlayState.CONTINUE;
         }
-
-        // Animation speed when not sleeping
-        controller.setAnimationSpeed(1.0f);
 
         if (Math.floor(this.getVelocity().lengthSquared()) > 0.0 || event.isMoving()) {
             controller.setAnimation(WALK_ANIM);
