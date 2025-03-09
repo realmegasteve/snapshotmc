@@ -31,12 +31,12 @@ public class RopeBlockItem extends BlockItem {
 
         // Check if the initial block is a RopeBlock
         if (world.getBlockState(pos).getBlock() instanceof RopeBlock) {
-            // Traverse downward to find the bottom-most rope block
+            // Traverse downward to find the bottom-most rope.json block
             while (world.getBlockState(pos.down()).getBlock() instanceof RopeBlock) {
                 pos = pos.down();
             }
 
-            // Place the new rope block at the bottom
+            // Place the new rope.json block at the bottom
             BlockState newState = world.getBlockState(context.getBlockPos());
 
             if(!newState.canPlaceAt(world, pos)) return super.useOnBlock(context);

@@ -1,0 +1,10 @@
+{
+  "itemGroup.snapshot_mc.name": "Snapshot MC",
+
+  "item.snapshot_mc.boomerang": "Boomerang",
+  "item.snapshot_mc.hammer": "Hammer",
+  "item.snapshot_mc.capybara_spawn_egg": "Capybara Spawn Egg",
+  "item.snapshot_mc.chainmail": "Chainmail",
+  "block.snapshot_mc.rope": "Rope",
+  "block.snapshot_mc.desert_flower": "Desert Flower"
+}

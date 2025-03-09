@@ -1,7 +1,5 @@
 package element4th.snapshotmc;
 
-import element4th.snapshotmc.common.item.ModItemGroups;
-import element4th.snapshotmc.common.sounds.ModSounds;
 import nazario.liby.api.registry.auto.LibyRegistryLoader;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
@@ -16,8 +14,6 @@ public class SnapshotMCMain implements ModInitializer, PreLaunchEntrypoint {
     @Override
     public void onInitialize() {
         LibyRegistryLoader.load("element4th.snapshotmc", LOGGER);
-        ModSounds.registerSounds();
-        ModItemGroups.registerItemGroups();
     }
 
     public static Identifier id(String name) {
