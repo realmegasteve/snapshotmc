@@ -1,6 +1,8 @@
 package element4th.snapshotmc.common.entity.custom.boomerang;
 
+import element4th.snapshotmc.common.enchantment.SnapshotEnchantments;
 import element4th.snapshotmc.common.item.SnapshotItems;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -74,21 +76,23 @@ public class BoomerangEntity extends PersistentProjectileEntity {
 
             hitEntity.damage(this.getWorld().getDamageSources().mobProjectile(hitEntity, (LivingEntity)this.getOwner()), 5);
         } else if (hitResult.getType() == HitResult.Type.BLOCK) {
-            // Bounce off walls instead of stopping
-            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
-            Direction hitSide = blockHitResult.getSide();
-            Vec3d currentVelocity = this.getVelocity();
+            if(true) {
+                // Bounce off walls instead of stopping
+                BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+                Direction hitSide = blockHitResult.getSide();
+                Vec3d currentVelocity = this.getVelocity();
 
-            // Reflect velocity based on which side was hit
-            Vec3d reflectedVelocity = switch (hitSide) {
-                case NORTH, SOUTH -> new Vec3d(currentVelocity.x, currentVelocity.y, -currentVelocity.z);
-                case EAST, WEST -> new Vec3d(-currentVelocity.x, currentVelocity.y, currentVelocity.z);
-                case UP, DOWN -> new Vec3d(currentVelocity.x, -currentVelocity.y, currentVelocity.z);
-                default -> currentVelocity;
-            };
+                // Reflect velocity based on which side was hit
+                Vec3d reflectedVelocity = switch (hitSide) {
+                    case NORTH, SOUTH -> new Vec3d(currentVelocity.x, currentVelocity.y, -currentVelocity.z);
+                    case EAST, WEST -> new Vec3d(-currentVelocity.x, currentVelocity.y, currentVelocity.z);
+                    case UP, DOWN -> new Vec3d(currentVelocity.x, -currentVelocity.y, currentVelocity.z);
+                    default -> currentVelocity;
+                };
 
-            this.setVelocity(reflectedVelocity.multiply(0.8)); // Reduce speed slightly
-            this.bounceCount++;
+                this.setVelocity(reflectedVelocity.multiply(0.8)); // Reduce speed slightly
+                this.bounceCount++;
+            }
         }
     }
 

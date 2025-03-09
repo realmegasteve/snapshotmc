@@ -1,7 +1,5 @@
 package element4th.snapshotmc.mixin;
 
-import net.minecraft.component.Component;
-import net.minecraft.component.ComponentType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
