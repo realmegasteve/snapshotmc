@@ -1,6 +1,5 @@
 package element4th.snapshotmc.common.item;
 
-import com.google.gson.JsonObject;
 import element4th.snapshotmc.SnapshotMCMain;
 import element4th.snapshotmc.common.entity.SnapshotEntities;
 import element4th.snapshotmc.common.item.custom.BoomerangItem;
@@ -8,13 +7,8 @@ import element4th.snapshotmc.common.item.custom.HammerItem;
 import nazario.liby.api.registry.auto.LibyAutoRegister;
 import nazario.liby.api.registry.auto.LibyEntrypoints;
 import nazario.liby.api.registry.helper.LibyItemRegister;
-import nazario.liby.api.registry.runtime.models.LibyJsonModel;
-import nazario.liby.api.registry.runtime.models.LibyModel;
-import nazario.liby.api.registry.runtime.models.LibyModelRegistry;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.item.*;
-import net.minecraft.util.Identifier;
 
 @LibyAutoRegister
 @LibyAutoRegister(method = "registerClient", entrypoints = LibyEntrypoints.CLIENT)
@@ -40,31 +34,5 @@ public class SnapshotItems {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register(entry -> {
             entry.addAfter(Items.CAMEL_SPAWN_EGG, CAPYBARA_SPAWN_EGG);
         });
-    }
-
-    public static void registerClient() {
-        LibyModelRegistry.register(
-                createItemCustom(CHAINMAIL, SnapshotMCMain.id("item/chainmail")),
-                createItemCustom(ModelIdentifier.ofInventoryVariant(CAPYBARA_SPAWN_EGG.liby$getId()), new Identifier[0], "minecraft:item/template_spawn_egg"),
-                createItemCustom(BOOMERANG, SnapshotMCMain.id("item/boomerang"))
-        );
-    }
-
-    public static LibyModel createItemCustom(ItemConvertible convertible, Identifier... spriteIdentifier) {
-        return createItemCustom(ModelIdentifier.ofInventoryVariant(convertible.asItem().liby$getId()), spriteIdentifier, "minecraft:item/generated");
-    }
-
-    public static LibyModel createItemCustom(ModelIdentifier id, Identifier[] spriteIdentifier, String parentModel) {
-        JsonObject model = new JsonObject();
-        model.addProperty("parent", parentModel);
-        JsonObject texturesObject = new JsonObject();
-
-        for(int i = 0; i < spriteIdentifier.length; ++i) {
-            texturesObject.addProperty("layer" + i, spriteIdentifier[i].toString());
-        }
-
-        model.add("textures", texturesObject);
-
-        return new LibyJsonModel(id.id().withPrefixedPath("item/"), id.getVariant(), model, "item");
     }
 }
